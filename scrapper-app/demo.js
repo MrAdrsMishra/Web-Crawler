@@ -1,4 +1,5 @@
 const { XMLParser } = require('fast-xml-parser');
+const fs = require('fs/promises');
 
 const fetch = (...args) =>
   import('node-fetch').then(({ default: fetch }) => fetch(...args));
@@ -10,53 +11,74 @@ let count = 0;
 const urls = [];
 
 async function fetchXml(url) {
-    const res = await fetch(url, {
-        headers: {
-            'User-Agent': 'Mozilla/5.0',
-            'Accept': 'application/xml,text/xml'
-        }
-    });
-    return await res.text();
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'application/xml,text/xml'
+    }
+  });
+  return await res.text();
 }
 
 async function extractProductUrls(productSitemapUrl) {
-    if (count >= MAX_URLS) return;
+  if (count >= MAX_URLS) return;
 
-    console.log('→ Visiting product sitemap:', productSitemapUrl);
+  console.log('→ Visiting product sitemap:', productSitemapUrl);
 
-    const xml = await fetchXml(productSitemapUrl);
-    const data = parser.parse(xml);
+  const xml = await fetchXml(productSitemapUrl);
+  const data = parser.parse(xml);
 
-    if (!data.urlset?.url) return;
+  if (!data.urlset?.url) return;
 
-    const list = [].concat(data.urlset.url);
+  const list = [].concat(data.urlset.url);
 
-    for (const u of list) {
-        if (count >= MAX_URLS) break;
-        urls.push(u.loc);
-        count++;
-    }
+  for (const u of list) {
+    if (count >= MAX_URLS) break;
+    urls.push(u.loc);
+    count++;
+  }
 }
 
 async function run() {
-    console.log('Visiting index sitemap...');
+  console.log('Visiting index sitemap...');
 
-    const indexXml = await fetchXml(
-        'https://www.worldofbooks.com/tools/sitemap-builder/sitemap.xml'
-    );
+  const indexXml = await fetchXml(
+    'https://www.worldofbooks.com/tools/sitemap-builder/collections_1.xml'
+  );
 
-    const indexData = parser.parse(indexXml);
+  const indexData = parser.parse(indexXml);
+//   if(indexData){
+//     dataview.innerText='indexData';
+//   }
+// const actualurls =indexData.sitemapindex.sitemap
+const actualurls =indexData.urlset.url
+  .map(s => s.loc)
+  .filter(loc => loc.includes('https://www.worldofbooks.com/collections'));
+//   ✅ Write parsed sitemap to file
+  await fs.writeFile(
+    'collections.txt',
+    JSON.stringify(
+         actualurls
+        , null, 2),
+    'utf-8'
+  );
 
-    const productSitemaps = [].concat(indexData.sitemapindex.sitemap);
+  // ✅ Read it back correctly
+  const content = await fs.readFile('collections.txt', 'utf-8');
 
-    for (const sm of productSitemaps) {
-        if (count >= MAX_URLS) break;
-        await extractProductUrls(sm.loc);
-    }
+  console.log("urls stored successfull ");
 
-    console.log('\nDONE');
-    console.log('Total URLs:', urls.length);
-    console.log('First 10 URLs:', urls.slice(0, 500));
+  // Extract sitemap URLs
+//   const productSitemaps = [].concat(indexData.sitemapindex.sitemap);
+
+//   for (const sm of productSitemaps) {
+//     if (count >= MAX_URLS) break;
+//     await extractProductUrls(sm.loc);
+//   }
+
+//   console.log('\nDONE');
+//   console.log('Total URLs:', urls.length);
+//   console.log('First 10 URLs:', urls.slice(0, 10));
 }
 
-run();
+run().catch(console.error);

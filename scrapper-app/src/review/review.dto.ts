@@ -18,20 +18,16 @@ import {
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PrimaryGeneratedColumn } from 'typeorm';
+import { JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Product } from 'src/product/product.entity';
 
-export class CreateReviewDto {
+export class ReviewDto {
   @PrimaryGeneratedColumn()
   id: string;
   
-  @IsNotEmpty()
-  @IsString()
-  @Length(1, 100)
-  @ApiProperty({
-    example: 'gsdfhgsb23vhag434v2v_njnjsd_kdss5',
-    description: 'Unique identifier',
-  })
-  readonly product_id: string;
+  @ManyToOne(()=>Product)
+  @JoinColumn({name: "productId"}) // putting K here since here can be multiple row for a same product for each row we can reach to its prodect parent
+  readonly product: Product;
 
   @IsNotEmpty()
   @IsString()

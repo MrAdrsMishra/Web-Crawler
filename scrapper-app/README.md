@@ -56,7 +56,8 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
-
+## data Flow
+the process starts with the crawler agent it first visits the sitemap index and then it download the html and save it to a temporary 
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.

@@ -1,34 +1,34 @@
-import { IsString, IsNumber, IsBoolean, IsArray, IsOptional, ValidateNested, IsObject, IsEnum, IsDate, IsUUID, IsEmail, IsUrl, IsNotEmpty, Length, Min, Max } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
-export class CreateCategoryDto {
-  @IsNotEmpty()
-  @IsString()
-  @Length(1, 100)
-  @ApiProperty({ example: "uuid", description: 'Unique identifier' })
-  readonly id: string;
+@Entity('category')
+export class Category {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+  @Column()
+  title: string;
+  @Column()
+  slug: string;
+  @Column()
+  lastScrapedAt: Date;
 
-  @IsNotEmpty()
-  @IsString()
-  @Length(1, 100)
-  @ApiProperty({ example: "Fantasy", description: 'Title of the entity' })
-  readonly title: string;
+  // linking to its children from self referencing
+  // Self-referencing: Many categories can have the same parent
+  @ManyToOne(() => Category, (category) => category.children, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'parentId' })
+  parent: Category;
 
-  @IsNotEmpty()
-  @IsString()
-  @Length(1, 100)
-  @ApiProperty({ example: "fantasy", description: 'The slug property' })
-  readonly slug: string;
-
-  @IsOptional()
-  @ApiPropertyOptional({ example: null, description: 'Unique identifier' })
-  readonly parentId?: any;
-
-  @IsNotEmpty()
-  @IsString()
-  @IsDate()
-  @Length(1, 100)
-  @ApiProperty({ example: "2026-01-14T10:32:10Z", description: 'The lastScrapedAt property', format: 'date-time' })
-  readonly lastScrapedAt: Date;
+  // Self-referencing: One category can have many child categories
+  @OneToMany(() => Category, (category) => category.parent)
+  children: Category[];
 }
